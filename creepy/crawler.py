@@ -71,7 +71,41 @@ class Crawler(object):
     def set_concurrency_level(self, level):
         self.max_outstanding = level
 
-    def follow_link(self, url, link):
+    def process_document(self, doc):
+        print 'GET', doc.status, doc.url
+
+    def crawl(self, url):
+        self.root_url = url
+
+        rx = re.match('(https?://)([^/]+)([^\?]*)(\?.*)?', url)
+        self.proto = rx.group(1)
+        self.host = rx.group(2)
+        self.path = rx.group(3)
+        self.dir_path = dirname(self.path)
+        self.query = rx.group(4)
+
+        self.targets.add(url)
+        self._spawn_new_worker()
+
+        while self.threads:
+            try:
+                for t in self.threads:
+                    t.join(1)
+                    if not t.isAlive():
+                        self.threads.remove(t)
+            except KeyboardInterrupt, e:
+                sys.exit(1)
+
+    def _url_domain(self, host):
+        parts = host.split('.')
+        if len(parts) <= 2:
+            return host
+        elif re.match('^[0-9]+(?:\.[0-9]+){3}$', host): # IP
+            return host
+        else:
+            return '.'.join(parts[1:])
+
+    def _follow_link(self, url, link):
         # Skip prefix
         if re.search(self.prefix_filter, link):
             return None
@@ -103,7 +137,8 @@ class Crawler(object):
         if self.follow_mode == self.F_ANY:
             return link_url
         elif self.follow_mode == self.F_SAME_DOMAIN:
-            return link_url if self.host == link_host else None
+            return link_host if self._url_domain(self.host) == \
+                    self._url_domain(link.host) else None
         elif self.follow_mode == self.F_SAME_HOST:
             return link_url if self.host == link_host else None
         elif self.follow_mode == self.F_SAME_PATH:
@@ -113,7 +148,7 @@ class Crawler(object):
             else:
                 return None
 
-    def add_target(self, target):
+    def _add_target(self, target):
         if not target:
             return
 
@@ -124,38 +159,16 @@ class Crawler(object):
         self.targets.add(target)
         self.targets_lock.release()
 
-    def crawl(self, url):
-        self.root_url = url
-
-        rx = re.match('(https?://)([^/]+)([^\?]*)(\?.*)?', url)
-        self.proto = rx.group(1)
-        self.host = rx.group(2)
-        self.path = rx.group(3)
-        self.dir_path = dirname(self.path)
-        self.query = rx.group(4)
-
-        self.targets.add(url)
-        self.spawn_new_worker()
-
-        while self.threads:
-            try:
-                for t in self.threads:
-                    t.join(1)
-                    if not t.isAlive():
-                        self.threads.remove(t)
-            except KeyboardInterrupt, e:
-                sys.exit(1)
-
-    def spawn_new_worker(self):
+    def _spawn_new_worker(self):
         self.concurrency_lock.acquire()
         self.concurrency += 1
-        t = Thread(target=self.worker, args=(self.concurrency,))
+        t = Thread(target=self._worker, args=(self.concurrency,))
         t.daemon = True
         self.threads.append(t)
         t.start()
         self.concurrency_lock.release()
 
-    def worker(self, sid):
+    def _worker(self, sid):
         while self.targets:
             try:
                 self.targets_lock.acquire()
@@ -172,8 +185,8 @@ class Crawler(object):
                 res = conn.getresponse()
 
                 if res.status == 301 or res.status == 302:
-                    rlink = self.follow_link(url, res.getheader('location'))
-                    self.add_target(rlink)
+                    rlink = self._follow_link(url, res.getheader('location'))
+                    self._add_target(rlink)
                     continue
 
                 # Check content type
@@ -192,11 +205,11 @@ class Crawler(object):
                 links = list(set(links))
 
                 for link in links:
-                    rlink = self.follow_link(url, link.strip())
-                    self.add_target(rlink)
+                    rlink = self._follow_link(url, link.strip())
+                    self._add_target(rlink)
 
                 if self.concurrency < self.max_outstanding:
-                    self.spawn_new_worker()
+                    self._spawn_new_worker()
             except KeyError as e:
                 # Pop from an empty set
                 break
@@ -209,6 +222,3 @@ class Crawler(object):
         self.concurrency_lock.acquire()
         self.concurrency -= 1
         self.concurrency_lock.release()
-
-    def process_document(self, doc):
-        print 'GET', doc.status, doc.url
