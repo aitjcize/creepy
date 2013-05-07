@@ -1,8 +1,13 @@
 # Creepy
 Dead simple web crawler for Python
 
+There are already a lot of web crawlers for Python, such as Scrapy. Creepy is
+yet another web crawler for Python, which ains to provide a simple and light way
+to write web crawlers.
+
 ## Example usage
     from creepy import Crawler
+
     class MyCrawler(Crawler):
         def process_document(self, doc):
             if doc.status == 200:
