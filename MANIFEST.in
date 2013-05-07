@@ -1,0 +1,5 @@
+include creepy/*
+include README
+include README.md
+include AUTHORS
+include COPYING
