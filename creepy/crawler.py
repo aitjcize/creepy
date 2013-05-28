@@ -115,24 +115,26 @@ class Crawler(object):
             if re.search(f, link):
                 return None
 
-        rx = re.match('(https?://)([^/]+)([^\?]*)(\?.*)?', url)
+        rx = re.match('(https?://)([^/:]+)(:[0-9]+)?([^\?]*)(\?.*)?', url)
         url_proto = rx.group(1)
         url_host = rx.group(2)
-        url_path = rx.group(3) if len(rx.group(3)) > 0 else '/'
+        url_port = rx.group(3) if rx.group(3) else ''
+        url_path = rx.group(4) if len(rx.group(4)) > 0 else '/'
         url_dir_path = dirname(url_path)
 
-        rx = re.match('((https?://)([^/]+))?([^\?]*)(\?.*)?', link)
+        rx = re.match('((https?://)([^/:]+)(:[0-9]+)?)?([^\?]*)(\?.*)?', link)
         link_full_url = rx.group(1) != None
         link_proto = rx.group(2) if rx.group(2) else url_proto
         link_host = rx.group(3) if rx.group(3) else url_host
-        link_path = quote(rx.group(4), '/%') if rx.group(4) else url_path
-        link_query = quote(rx.group(5), '?=&%') if rx.group(5) else ''
+        link_port = rx.group(4) if rx.group(4) else url_port
+        link_path = quote(rx.group(5), '/%') if rx.group(5) else url_path
+        link_query = quote(rx.group(6), '?=&%') if rx.group(6) else ''
         link_dir_path = dirname(link_path)
 
         if not link_full_url and not link.startswith('/'):
             link_path = normpath(join(url_dir_path, link_path))
 
-        link_url = link_proto + link_host + link_path + link_query
+        link_url = link_proto + link_host + link_port + link_path + link_query
 
         if self.follow_mode == self.F_ANY:
             return link_url
