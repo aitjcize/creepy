@@ -190,8 +190,11 @@ class Crawler(object):
                     continue
 
                 # Check content type
-                if not re.search(self.content_type_filter,
-                        res.getheader('Content-Type')):
+                try:
+                    if not re.search(self.content_type_filter,
+                            res.getheader('Content-Type')):
+                        continue
+                except TypeError: # getheader result is None
                     continue
 
                 doc = Document(res, url)
