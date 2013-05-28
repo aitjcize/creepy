@@ -4,7 +4,7 @@ from distutils.core import setup
 
 setup(
 	name = 'creepy',
-	version = '0.1.0',
+	version = '0.1.1',
 	description = 'Dead simple web crawler for Python',
 	author = 'Wei-Ning Huang (AZ)',
 	author_email = 'aitjcize@gmail.com',
