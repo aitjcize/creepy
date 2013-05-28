@@ -55,7 +55,6 @@ class Crawler(object):
 
         self.targets_lock = Lock()
         self.concurrency_lock = Lock()
-        self.process_lock = Lock()
 
     def set_content_type_filter(self, cf):
         self.content_type_filter = '(%s)' % ('|'.join(cf))
@@ -200,9 +199,7 @@ class Crawler(object):
                     continue
 
                 doc = Document(res, url)
-                self.process_lock.acquire()
                 self.process_document(doc)
-                self.process_lock.release()
 
                 # Make unique list
                 links = re.findall('''href\s*=\s*['"]\s*([^'"]+)['"]''',
