@@ -138,8 +138,8 @@ class Crawler(object):
         if self.follow_mode == self.F_ANY:
             return link_url
         elif self.follow_mode == self.F_SAME_DOMAIN:
-            return link_host if self._url_domain(self.host) == \
-                    self._url_domain(link.host) else None
+            return link_url if self._url_domain(self.host) == \
+                    self._url_domain(link_host) else None
         elif self.follow_mode == self.F_SAME_HOST:
             return link_url if self.host == link_host else None
         elif self.follow_mode == self.F_SAME_PATH:
