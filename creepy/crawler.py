@@ -76,7 +76,7 @@ class Crawler(object):
 
     def process_document(self, doc):
         print 'GET', doc.status, doc.url
-        #to do stuff with url depth use self.calc_depth(doc.url)
+        #to do stuff with url depth use self._calc_depth(doc.url)
 
     def crawl(self, url):
         self.root_url = url
@@ -162,7 +162,7 @@ class Crawler(object):
         if not target:
             return
         
-        if self.max_depth and self.calc_depth(target) > self.max_depth:
+        if self.max_depth and self._calc_depth(target) > self.max_depth:
             return
 
         self.targets_lock.acquire()
