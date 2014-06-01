@@ -76,6 +76,7 @@ class Crawler(object):
 
     def process_document(self, doc):
         print 'GET', doc.status, doc.url
+        #to do stuff with url depth use self.calc_depth(doc.url)
 
     def crawl(self, url):
         self.root_url = url
