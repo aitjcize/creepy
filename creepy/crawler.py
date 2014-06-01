@@ -154,7 +154,7 @@ class Crawler(object):
             else:
                 return None
     
-    def calc_depth(self, url):
+    def _calc_depth(self, url):
         #calculate url depth
         return len(url.replace('https', 'http').replace(self.root_url, '').rstrip('/').split('/'))-1
 
