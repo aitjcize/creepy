@@ -47,6 +47,7 @@ class Crawler(object):
         self.threads = []
         self.concurrency = 0
         self.max_outstanding = 16
+        self.max_depth = 0
 
         self.follow_mode = self.F_SAME_HOST
         self.content_type_filter = '(text/html)'
@@ -69,9 +70,13 @@ class Crawler(object):
 
     def set_concurrency_level(self, level):
         self.max_outstanding = level
+        
+    def set_max_depth(self, max_depth):
+        self.max_depth = max_depth
 
     def process_document(self, doc):
         print 'GET', doc.status, doc.url
+        #to do stuff with url depth use self._calc_depth(doc.url)
 
     def crawl(self, url):
         self.root_url = url
@@ -148,9 +153,16 @@ class Crawler(object):
                 return link_url
             else:
                 return None
+    
+    def _calc_depth(self, url):
+        #calculate url depth
+        return len(url.replace('https', 'http').replace(self.root_url, '').rstrip('/').split('/'))-1
 
     def _add_target(self, target):
         if not target:
+            return
+        
+        if self.max_depth and self._calc_depth(target) > self.max_depth:
             return
 
         self.targets_lock.acquire()
