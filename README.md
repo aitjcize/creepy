@@ -25,7 +25,7 @@ to write web crawlers.
 1. Install from PyPI:  
 `pip install creepy`
 2. Arch Linux users can find it on AUR or using [Yaourt](https://wiki.archlinux.org/index.php/Yaourt):  
-`yaourt -S python-creepy`
+`yaourt -S python2-creepy-git`
 
 ## Bugs
 * Please report bugs to the github issure tracker.
