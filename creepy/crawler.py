@@ -1,5 +1,5 @@
 #-*- coding: utf-8 -*-
-# 
+#
 # Crawler.py
 #
 # Copyright (C) 2010 -  Wei-Ning Huang (AZ) <aitjcize@gmail.com>
@@ -37,9 +37,6 @@ class Document(object):
         self.headers = dict(res.getheaders())
 
 class Crawler(object):
-    '''
-    A Crawler that crawls through cplusplus.com
-    '''
     F_ANY, F_SAME_DOMAIN, F_SAME_HOST, F_SAME_PATH = range(4)
     def __init__(self):
         self.host = None
