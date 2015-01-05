@@ -21,6 +21,7 @@
 #
 
 import httplib
+import logging
 import re
 import sys
 
@@ -38,14 +39,19 @@ class Document(object):
 
 class Crawler(object):
     F_ANY, F_SAME_DOMAIN, F_SAME_HOST, F_SAME_PATH = range(4)
-    def __init__(self):
-        self.host = None
+    def __init__(self, debug=False):
         self.visited = {}
         self.targets = set()
         self.threads = []
         self.concurrency = 0
         self.max_outstanding = 16
         self.max_depth = 0
+        self.root_url = None
+        self.proto = None
+        self.host = None
+        self.path = None
+        self.dir_path = None
+        self.query = None
 
         self.follow_mode = self.F_SAME_HOST
         self.content_type_filter = '(text/html)'
@@ -54,6 +60,8 @@ class Crawler(object):
 
         self.targets_lock = Lock()
         self.concurrency_lock = Lock()
+
+        logging.basicConfig(level=logging.DEBUG if debug else logging.ERROR)
 
     def set_content_type_filter(self, cf):
         self.content_type_filter = '(%s)' % ('|'.join(cf))
@@ -68,7 +76,7 @@ class Crawler(object):
 
     def set_concurrency_level(self, level):
         self.max_outstanding = level
-        
+
     def set_max_depth(self, max_depth):
         self.max_depth = max_depth
 
@@ -95,7 +103,7 @@ class Crawler(object):
                     t.join(1)
                     if not t.isAlive():
                         self.threads.remove(t)
-            except KeyboardInterrupt, e:
+            except KeyboardInterrupt:
                 sys.exit(1)
 
     def _url_domain(self, host):
@@ -151,15 +159,16 @@ class Crawler(object):
                 return link_url
             else:
                 return None
-    
+
     def _calc_depth(self, url):
-        #calculate url depth
-        return len(url.replace('https', 'http').replace(self.root_url, '').rstrip('/').split('/'))-1
+        # calculate url depth
+        return len(url.replace('https', 'http').replace(self.root_url, '')
+                .rstrip('/').split('/')) - 1
 
     def _add_target(self, target):
         if not target:
             return
-        
+
         if self.max_depth and self._calc_depth(target) > self.max_depth:
             return
 
@@ -179,25 +188,32 @@ class Crawler(object):
         t.start()
         self.concurrency_lock.release()
 
-    def _worker(self, sid):
+    def _worker(self, _):
         while self.targets:
             try:
                 self.targets_lock.acquire()
                 url = self.targets.pop()
+                logging.debug('url: %s' % url)
                 self.visited[url] = True
                 self.targets_lock.release()
 
-                rx = re.match('https?://([^/]+)(.*)', url)
-                host = rx.group(1)
-                path = rx.group(2)
+                rx = re.match('(https?)://([^/]+)(.*)', url)
+                protocol = rx.group(1)
+                host = rx.group(2)
+                path = rx.group(3)
 
-                conn = httplib.HTTPConnection(host, timeout=10)
+                if protocol == 'http':
+                    conn = httplib.HTTPConnection(host, timeout=10)
+                else:
+                    conn = httplib.HTTPSConnection(host, timeout=10)
+
                 conn.request('GET', path)
                 res = conn.getresponse()
 
                 if res.status == 301 or res.status == 302:
                     rlink = self._follow_link(url, res.getheader('location'))
                     self._add_target(rlink)
+                    logging.info('redirect: %s -> %s' % (url, rlink))
                     continue
 
                 # Check content type
@@ -226,7 +242,7 @@ class Crawler(object):
                 # Pop from an empty set
                 break
             except (httplib.HTTPException, EnvironmentError) as e:
-                #print '%s, retrying' % str(e)
+                logging.error('%s: %s, retrying' % (url, str(e)))
                 self.targets_lock.acquire()
                 self.targets.add(url)
                 self.targets_lock.release()
