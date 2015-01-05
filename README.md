@@ -6,20 +6,22 @@ yet another web crawler for Python, which ains to provide a simple and light way
 to write web crawlers.
 
 ## Example usage
-    from creepy import Crawler
+```python
+from creepy import Crawler
 
-    class MyCrawler(Crawler):
-        def process_document(self, doc):
-            if doc.status == 200:
-                print '[%d] %s' % (doc.status, doc.url)
-    	    # Do something with doc.text (the content of the page)
-    	else:
-    	    pass
-    
-    crawler = MyCrawler()
-    crawler.set_follow_mode(Crawler.F_SAME_HOST)
-    crawler.add_url_filter('\.(jpg|jpeg|gif|png|js|css|swf)$')
-    crawler.crawl('http://www.example.com/')
+class MyCrawler(Crawler):
+def process_document(self, doc):
+    if doc.status == 200:
+        print '[%d] %s' % (doc.status, doc.url)
+    # Do something with doc.text (the content of the page)
+else:
+    pass
+
+crawler = MyCrawler()
+crawler.set_follow_mode(Crawler.F_SAME_HOST)
+crawler.add_url_filter('\.(jpg|jpeg|gif|png|js|css|swf)$')
+crawler.crawl('http://www.example.com/')
+```
 
 ## Installation
 1. Install from PyPI:  
