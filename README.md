@@ -1,3 +1,6 @@
+[![PyPI Version](https://img.shields.io/pypi/v/creepy.svg?style=flat)](https://pypi.python.org/pypi/creepy/)
+[![PyPI Download](https://img.shields.io/pypi/dm/creepy.svg?style=flat)](https://pypi.python.org/pypi/creepy/)
+
 # Creepy
 Dead simple web crawler for Python
 
