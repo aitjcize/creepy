@@ -116,6 +116,9 @@ class Crawler(object):
             return '.'.join(parts[1:])
 
     def _follow_link(self, url, link):
+        # Remove anchor
+        link = re.sub(r'#[^#]*$', '', link)
+
         # Skip prefix
         if re.search(self.prefix_filter, link):
             return None
